@@ -8,39 +8,63 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.foxxx.contactslistdecompose.domain.Contact
+import com.foxxx.contactslistdecompose.ui.contact.AddContact
+import com.foxxx.contactslistdecompose.ui.contact.Contacts
+import com.foxxx.contactslistdecompose.ui.contact.EditContact
 import com.foxxx.contactslistdecompose.ui.theme.ContactsListDeComposeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            var screen by remember {
+                mutableStateOf<Screen>(Screen.ContactList)
+            }
             ContactsListDeComposeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
+                when (val currentScreen = screen) {
+                    Screen.AddContact -> {
+                        AddContact(
+                            onContactSaved = {
+                                screen = Screen.ContactList
+                            }
+                        )
+                    }
+
+                    Screen.ContactList -> {
+                        Contacts(
+                            onAddContactClick = {
+                                screen = Screen.AddContact
+                            },
+                            onContactClick = {
+                                screen = Screen.EditContact(it)
+                            }
+                        )
+                    }
+
+                    is Screen.EditContact -> {
+                        EditContact(
+                            contact = currentScreen.contact,
+                            onContactChanged = {
+                                screen = Screen.ContactList
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+sealed class Screen {
+    object ContactList : Screen()
+    object AddContact : Screen()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ContactsListDeComposeTheme {
-        Greeting("Android")
-    }
+    data class EditContact(val contact: Contact) : Screen()
 }
