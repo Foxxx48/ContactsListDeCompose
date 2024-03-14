@@ -1,5 +1,7 @@
 package com.foxxx.contactslistdecompose.presentation
 
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.statekeeper.consume
 import com.foxxx.contactslistdecompose.data.RepositoryImpl
 import com.foxxx.contactslistdecompose.domain.Contact
 import com.foxxx.contactslistdecompose.domain.EditContactUseCase
@@ -8,15 +10,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class DefaultEditContactComponent(
+    componentContext: ComponentContext,
     val contact: Contact
-) : EditContactComponent {
+) : EditContactComponent, ComponentContext by componentContext {
 
     private val repository = RepositoryImpl
     private val editContactUseCase = EditContactUseCase(repository)
 
+    init {
+        stateKeeper.register(KEY) {
+            model.value
+        }
+    }
+
     private val _model =
         MutableStateFlow(
-            EditContactComponent.Model(
+            stateKeeper.consume(KEY) ?: EditContactComponent.Model(
                 username = contact.username,
                 phone = contact.phone
             )
@@ -41,5 +50,9 @@ class DefaultEditContactComponent(
                 phone = phone
             )
         )
+    }
+
+    companion object {
+        private const val KEY = "DefaultEditContactComponent"
     }
 }

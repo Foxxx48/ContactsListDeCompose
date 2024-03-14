@@ -1,20 +1,29 @@
 package com.foxxx.contactslistdecompose.presentation
 
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.statekeeper.consume
 import com.foxxx.contactslistdecompose.data.RepositoryImpl
 import com.foxxx.contactslistdecompose.domain.AddContactUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class DefaultAddContactComponent : AddContactComponent {
+class DefaultAddContactComponent(
+    componentContext: ComponentContext
+) : AddContactComponent, ComponentContext by componentContext {
 
     private val repository = RepositoryImpl
     private val addContactUseCase = AddContactUseCase(repository)
 
+    init {
+        stateKeeper.register(KEY) {
+            model.value
+        }
+    }
 
     private val _model =
         MutableStateFlow(
-            AddContactComponent.Model(
+            stateKeeper.consume(KEY) ?: AddContactComponent.Model(
                 username = "",
                 phone = ""
             )
@@ -33,5 +42,9 @@ class DefaultAddContactComponent : AddContactComponent {
     override fun onSaveContactClicked() {
         val (username, phone) = model.value
         addContactUseCase(username, phone)
+    }
+
+    companion object {
+        private const val KEY = "DefaultAddContactComponent"
     }
 }
